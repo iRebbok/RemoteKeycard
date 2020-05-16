@@ -27,10 +27,7 @@ namespace RemoteKeycard
 
             var playerIntentory = ev.Player.GetInventory();
 
-            // Save only the keys
-            // We leave only what ends in KEYCARD or is in the list of cards
-            playerIntentory.RemoveAll(i => !i.ItemType.ToString().EndsWith("KEYCARD") ||
-                _allowedTypes != null && !_allowedTypes.Any(ai => i.ItemType == ai));
+            playerIntentory.RemoveAll(i => _allowedTypes != null && !_allowedTypes.Any(ai => i.ItemType == ai));
 
             foreach (var item in playerIntentory)
             {
