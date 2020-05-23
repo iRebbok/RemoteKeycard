@@ -4,6 +4,7 @@ using Smod2.Events;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using UnityEngine;
 using SMItemType = Smod2.API.ItemType;
 
 namespace RemoteKeycard
@@ -13,6 +14,7 @@ namespace RemoteKeycard
         private readonly Plugin _plugin;
         // Allowed items for remote access
         private SMItemType[] _allowedTypes;
+        private Item[] _cache;
 
         public LogicHandler(Plugin plugin)
         {
@@ -40,7 +42,11 @@ namespace RemoteKeycard
 
             foreach (var item in playerIntentory)
             {
-                var gameItem = item.GetComponent() as Item;
+                var gameItem = GetItems().FirstOrDefault(i => (byte)i.id == (byte)item.ItemType);
+
+                // Relevant for items whose type was not found
+                if (gameItem == null)
+                    continue;
 
 #if DEBUG
                 _plugin.Info($"OnDoorAccess game item is null: {gameItem == null}");
@@ -84,6 +90,13 @@ namespace RemoteKeycard
                 }
                 _allowedTypes = allowedItems.ToArray();
             }
+        }
+
+        public Item[] GetItems()
+        {
+            if (_cache == null)
+                _cache = GameObject.FindObjectOfType<Inventory>().availableItems;
+            return _cache;
         }
     }
 }
