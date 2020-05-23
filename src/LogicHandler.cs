@@ -22,16 +22,30 @@ namespace RemoteKeycard
 
         public void OnDoorAccess(PlayerDoorAccessEvent ev)
         {
+#if DEBUG
+            _plugin.Info($"OnDoorAccess event is null: {ev == null}");
+            _plugin.Info($"OnDoorAccess door is null: {ev?.Door == null}");
+            _plugin.Info($"OnDoorAccess player is null: {ev?.Player == null}");
+#endif
             if (ev.Allow != false || ev.Door.Destroyed != false || ev.Door.Locked != false)
                 return;
 
             var playerIntentory = ev.Player.GetInventory();
+
+#if DEBUG
+            _plugin.Info($"OnDoorAccess player inventory is null: {playerIntentory == null}");
+#endif
 
             playerIntentory.RemoveAll(i => _allowedTypes != null && !_allowedTypes.Any(ai => i.ItemType == ai));
 
             foreach (var item in playerIntentory)
             {
                 var gameItem = item.GetComponent() as Item;
+
+#if DEBUG
+                _plugin.Info($"OnDoorAccess game item is null: {gameItem == null}");
+#endif
+
                 if (gameItem.permissions == null || gameItem.permissions.Length == 0)
                     continue;
 
