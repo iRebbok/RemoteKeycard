@@ -68,6 +68,7 @@ namespace RemoteKeycard
 
                     allowedItems.Add(allowedItem);
                 }
+                _allowedTypes = allowedItems.ToArray();
             }
         }
     }
