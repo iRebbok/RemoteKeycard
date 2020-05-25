@@ -18,7 +18,7 @@ namespace RemoteKeycard
         SmodRevision = 0)]
     public sealed class RemoteKeycard : Plugin
     {
-        public const string _version = "1.4.0";
+        public const string _version = "1.4.1";
 
         private LogicHandler _logicHandler;
 
