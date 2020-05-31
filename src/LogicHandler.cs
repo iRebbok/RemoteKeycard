@@ -1,19 +1,20 @@
-using Smod2;
-using Smod2.EventHandlers;
-using Smod2.Events;
+using EXILED;
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
 using UnityEngine;
-using SMItemType = Smod2.API.ItemType;
 
 namespace RemoteKeycard
 {
-    internal sealed class LogicHandler : IEventHandlerDoorAccess, IEventHandlerWaitingForPlayers
+    internal sealed class LogicHandler
     {
         private readonly Plugin _plugin;
         // Allowed items for remote access
-        private SMItemType[] _allowedTypes;
+        private List<ItemType> _allowedTypes;
+        // If the previous hash is the same,
+        // then do not parse the list of allowed items again
+        private int _allowedTypesHash;
         private Item[] _cache;
 
         public LogicHandler(Plugin plugin)
@@ -22,73 +23,76 @@ namespace RemoteKeycard
             _allowedTypes = null;
         }
 
-        public void OnDoorAccess(PlayerDoorAccessEvent ev)
+        public void OnDoorAccess(ref DoorInteractionEvent ev)
         {
 #if DEBUG
-            _plugin.Info($"OnDoorAccess event is null: {ev == null}");
-            _plugin.Info($"OnDoorAccess door is null: {ev?.Door == null}");
-            _plugin.Info($"OnDoorAccess player is null: {ev?.Player == null}");
+            Log.Info($"OnDoorAccess event is null: {ev == null}");
+            Log.Info($"OnDoorAccess door is null: {ev?.Door == null}");
+            Log.Info($"OnDoorAccess player is null: {ev?.Player == null}");
 #endif
-            if (ev.Allow != false || ev.Door.Destroyed != false || ev.Door.Locked != false)
+            if (ev.Allow != false || ev.Door.destroyed != false || ev.Door.locked != false)
                 return;
 
-            var playerIntentory = ev.Player.GetInventory();
+            var playerIntentory = ev.Player.inventory.items;
 
 #if DEBUG
-            _plugin.Info($"OnDoorAccess player inventory is null: {playerIntentory == null}");
+            Log.Info($"OnDoorAccess player inventory is null: {playerIntentory == null}");
 #endif
-
-            playerIntentory.RemoveAll(i => _allowedTypes != null && !_allowedTypes.Any(ai => i.ItemType == ai));
 
             foreach (var item in playerIntentory)
             {
-                var gameItem = GetItems().FirstOrDefault(i => (byte)i.id == (byte)item.ItemType);
+                if (_allowedTypes != null && _allowedTypes.Contains(item.id))
+                    continue;
+
+                var gameItem = GetItems().FirstOrDefault(i => i.id == item.id);
 
                 // Relevant for items whose type was not found
                 if (gameItem == null)
                     continue;
 
 #if DEBUG
-                _plugin.Info($"OnDoorAccess game item is null: {gameItem == null}");
+                Log.Info($"OnDoorAccess game item is null: {gameItem == null}");
 #endif
 
                 if (gameItem.permissions == null || gameItem.permissions.Length == 0)
                     continue;
 
-                if (gameItem.permissions.Contains(ev.Door.Permission, StringComparison.InvariantCultureIgnoreCase))
-                {
-                    ev.Allow = true;
-                    continue;
-                }
+                foreach(var itemPerm in gameItem.permissions)
+                    if (ev.Door.backwardsCompatPermissions.TryGetValue(itemPerm, out var flag) && ev.Door.PermissionLevels.HasPermission(flag))
+                    {
+                        ev.Allow = true;
+                        continue;
+                    }
             }
 
         }
 
-        public void OnWaitingForPlayers(WaitingForPlayersEvent ev)
+        public void OnWaitingForPlayers()
         {
-            if (_plugin.GetConfigBool("rk_disable"))
-                PluginManager.Manager.DisablePlugin(_plugin);
+            if (Plugin.Config.GetBool("rk_disable"))
+                _plugin.OnDisable();
             else
             {
-                var arrayItems = _plugin.GetConfigList("rk_cards");
-                if (arrayItems == null || arrayItems.Length == 0)
+                var arrayItems = Plugin.Config.GetString("rk_cards").Split(',');
+                if (arrayItems == null || arrayItems.Length == 0 || _allowedTypesHash == arrayItems.GetHashCode())
                     return;
 
-                var allowedItems = new List<SMItemType>();
-                SMItemType allowedItem = SMItemType.NULL;
+                _allowedTypesHash = arrayItems.GetHashCode();
+                var allowedItems = new List<ItemType>();
+                ItemType allowedItem = ItemType.None;
                 foreach (var item in arrayItems)
                 {
-                    if (Enum.TryParse<SMItemType>(item, true, out var enumedItem))
+                    if (Enum.TryParse<ItemType>(item, true, out var enumedItem))
                         allowedItem = enumedItem;
-                    else if (int.TryParse(item, out var numericItem) && Enum.IsDefined(typeof(SMItemType), numericItem))
-                        allowedItem = (SMItemType)numericItem;
+                    else if (int.TryParse(item, NumberStyles.Number, CultureInfo.InvariantCulture, out var numericItem) && Enum.IsDefined(typeof(ItemType), numericItem))
+                        allowedItem = (ItemType)numericItem;
 
-                    if (allowedItem == SMItemType.NULL)
+                    if (allowedItem == ItemType.None)
                         continue;
 
                     allowedItems.Add(allowedItem);
                 }
-                _allowedTypes = allowedItems.ToArray();
+                _allowedTypes = allowedItems;
             }
         }
 
