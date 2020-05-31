@@ -41,7 +41,7 @@ namespace RemoteKeycard
 
             foreach (var item in playerIntentory)
             {
-                if (_allowedTypes != null && !_allowedTypes.Any() && !_allowedTypes.Contains(item.id))
+                if (_allowedTypes != null && _allowedTypes.Any() && !_allowedTypes.Contains(item.id))
                     continue;
 
                 var gameItem = GetItems().FirstOrDefault(i => i.id == item.id);
