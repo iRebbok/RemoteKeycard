@@ -4,7 +4,7 @@ namespace RemoteKeycard
 {
     public sealed class RemoteKeycard : Plugin
     {
-        internal const string VERSION = "1.4.1";
+        internal const string VERSION = "1.4.2";
 
         private LogicHandler _logicHandler;
 
