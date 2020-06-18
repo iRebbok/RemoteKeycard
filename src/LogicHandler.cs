@@ -26,33 +26,50 @@ namespace RemoteKeycard
         public void OnDoorAccess(ref DoorInteractionEvent ev)
         {
 #if DEBUG
-            Log.Info($"OnDoorAccess event is null: {ev == null}");
-            Log.Info($"OnDoorAccess door is null: {ev?.Door == null}");
-            Log.Info($"OnDoorAccess player is null: {ev?.Player == null}");
+            var nickName = ev.Player?.nicknameSync?.MyNick ?? "Null";
+            var userId = ev.Player?.characterClassManager?.UserId ?? "Null";
+            Log.Debug($"Player {nickName} ({userId}) is trying to open the door");
+#pragma warning disable CS0618 // Type or member is obsolete
+            Log.Debug($"Door permission: {(string.IsNullOrEmpty(ev.Door.permissionLevel) ? "None" : ev.Door.permissionLevel)}");
+#pragma warning restore CS0618 // Type or member is obsolete
 #endif
             if (ev.Allow != false || ev.Door.destroyed != false || ev.Door.locked != false)
+#if DEBUG
+            {
+                Log.Debug($"Door is locked or destroyed or the player {nickName} ({userId}) has access to open it");
                 return;
+            }
+            else
+                Log.Debug($"Further processing allowed...");
+#else
+                return;
+#endif
 
-            var playerIntentory = ev.Player.inventory.items;
+            var playerIntentory = ev.Player?.inventory.items;
 
 #if DEBUG
-            Log.Info($"OnDoorAccess player inventory is null: {playerIntentory == null}");
+            Log.Debug($"Player inventory is null: {playerIntentory == null}");
 #endif
 
             foreach (var item in playerIntentory)
             {
+#if DEBUG
+                Log.Debug($"Processing an item in the player’s inventory: {item.id} ({(int)item.id})");
+#endif
+
                 if (_allowedTypes != null && _allowedTypes.Any() && !_allowedTypes.Contains(item.id))
                     continue;
 
                 var gameItem = GetItems().FirstOrDefault(i => i.id == item.id);
 
+#if DEBUG
+                Log.Debug($"Game item is null: {gameItem == null}");
+                Log.Debug($"Game item processing: C {gameItem.itemCategory} ({(int)gameItem.itemCategory}) | T {item.id} ({(int)item.id}) | P {string.Join(", ", gameItem.permissions)}");
+#endif
+
                 // Relevant for items whose type was not found
                 if (gameItem == null)
                     continue;
-
-#if DEBUG
-                Log.Info($"OnDoorAccess game item is null: {gameItem == null}");
-#endif
 
                 if (gameItem.permissions == null || gameItem.permissions.Length == 0)
                     continue;
@@ -60,6 +77,9 @@ namespace RemoteKeycard
                 foreach(var itemPerm in gameItem.permissions)
                     if (ev.Door.backwardsCompatPermissions.TryGetValue(itemPerm, out var flag) && ev.Door.PermissionLevels.HasPermission(flag))
                     {
+#if DEBUG
+                        Log.Debug($"Item has successfully passed permission validation: {gameItem.id} ({(int)gameItem.id})");
+#endif
                         ev.Allow = true;
                         continue;
                     }
