@@ -4,11 +4,11 @@ namespace RemoteKeycard
 {
     public sealed class RemoteKeycard : Plugin
     {
-        public const string _version = "1.4.1";
+        internal const string VERSION = "1.4.1";
 
         private LogicHandler _logicHandler;
 
-        public override string getName { get; } = "RemoteKeycard";
+        public override string getName { get; } = nameof(RemoteKeycard);
 
         public RemoteKeycard()
         {

@@ -1,6 +1,5 @@
-﻿using System.Reflection;
+using System.Reflection;
 
-[assembly: AssemblyTitle("RemoteKeycard")]
-[assembly: AssemblyProduct("RemoteKeycard")]
-[assembly: AssemblyCopyright("Copyright © iRebbok 2020")]
-[assembly: AssemblyVersion(RemoteKeycard.RemoteKeycard._version)]
+[assembly: AssemblyVersion(RemoteKeycard.RemoteKeycard.VERSION)]
+[assembly: AssemblyFileVersion(RemoteKeycard.RemoteKeycard.VERSION)]
+[assembly: AssemblyInformationalVersion(RemoteKeycard.RemoteKeycard.VERSION)]
