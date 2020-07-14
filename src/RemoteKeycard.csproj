@@ -7,29 +7,21 @@
     <Copyright>Copyright iRebbok 2020 - $([System.DateTime]::Now.ToString("yyyy"))</Copyright>
     <TargetFramework>net472</TargetFramework>
     <PlatformTarget>x64</PlatformTarget>
-
+    <Version>1.4.3-EXILED2.0.0+beta1</Version>
+    
     <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
-    <GenerateAssemblyInformationalVersionAttribute>false</GenerateAssemblyInformationalVersionAttribute>
-    <GenerateAssemblyFileVersionAttribute>false</GenerateAssemblyFileVersionAttribute>
-    <GenerateAssemblyVersionAttribute>false</GenerateAssemblyVersionAttribute>
   </PropertyGroup>
 
   <ItemGroup>
-    <Reference Include="Assembly-CSharp">
-      <HintPath>..\dependencies\Assembly-CSharp.dll</HintPath>
-    </Reference>
-    <Reference Include="EXILED">
-      <HintPath>..\..\Report-INtegration\ServerReport\Libs\EXILED.dll</HintPath>
-    </Reference>
-    <Reference Include="EXILED_Events">
-      <HintPath>..\..\Report-INtegration\ServerReport\Libs\EXILED_Events.dll</HintPath>
-    </Reference>
-    <Reference Include="Mirror">
-      <HintPath>..\dependencies\Mirror.dll</HintPath>
-    </Reference>
-    <Reference Include="UnityEngine.CoreModule">
-      <HintPath>..\dependencies\UnityEngine.CoreModule.dll</HintPath>
-    </Reference>
+    <PackageReference Include="EXILED" Version="2.0.0-beta1" PrivateAssets="All" />
+    <Reference Include="Assembly-CSharp" HintPath="..\dependencies\Assembly-CSharp.dll" Private="false" />
+    <Reference Include="Mirror" HintPath="..\dependencies\Mirror.dll" Private="false" />
+    <Reference Include="UnityEngine.CoreModule" HintPath="..\dependencies\UnityEngine.CoreModule.dll" Private="false" />
   </ItemGroup>
+
+  <Target Name="PostBuild" AfterTargets="PostBuildEvent">
+    <!-- Since '$(OutputPath)\Exiled*.dll' doens't work, I just use this -->
+    <Delete Files="$([System.IO.Directory]::GetFiles(&quot;$(OutDir)&quot;, 'Exiled*.dll'))" />
+  </Target>
 
 </Project>

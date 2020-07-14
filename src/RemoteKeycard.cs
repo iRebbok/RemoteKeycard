@@ -1,56 +1,44 @@
-using EXILED;
+using Exiled.API.Features;
+using Exiled.API.Interfaces;
 using System;
 using System.Collections.Generic;
-using System.Globalization;
 
 namespace RemoteKeycard
 {
-    public sealed class RemoteKeycard : Plugin
+    public sealed class RKConfig : IConfig
     {
-        internal const string VERSION = "1.4.2";
+        public bool IsEnabled { get; set; } = true;
+
+        // Just make an empty space as []
+        public List<ItemType> Cards { get; set; } = new List<ItemType>();
+    }
+
+    public sealed class RemoteKeycard : Plugin<RKConfig>
+    {
+        internal static RemoteKeycard instance;
 
         private readonly LogicHandler _logicHandler = new LogicHandler();
 
-        public override string getName { get; } = nameof(RemoteKeycard);
+        public override string Name => nameof(RemoteKeycard);
+        public override string Author => "iRebbok";
+        public override Version Version { get; }
 
-        public override void OnReload() { }
-
-        public override void OnDisable()
+        public RemoteKeycard()
         {
-            Events.DoorInteractEvent -= _logicHandler.OnDoorAccess;
+            // A simple way to dynamic versioning
+            Version = typeof(RemoteKeycard).Assembly.GetName().Version;
+            instance = this;
         }
 
-        public override void OnEnable()
+        public override void OnDisabled() =>
+            Exiled.Events.Handlers.Player.InteractingDoor -= _logicHandler.OnDoorAccess;
+
+        public override void OnEnabled()
         {
-            if (!Config.GetBool("rk_disable"))
-            {
-                var arrayItems = Config.GetStringList("rk_cards");
-                if (arrayItems.Count != 0)
-                {
-                    var allowedItems = new List<ItemType>();
-                    ItemType allowedItem = ItemType.None;
-                    foreach (var item in arrayItems)
-                    {
-                        if (Enum.TryParse<ItemType>(item, true, out var enumedItem))
-                        {
-                            allowedItem = enumedItem;
-                        }
-                        else if (int.TryParse(item, NumberStyles.Number, CultureInfo.InvariantCulture, out var numericItem)
-                            && Enum.IsDefined(typeof(ItemType), numericItem))
-                        {
-                            allowedItem = (ItemType)numericItem;
-                        }
-
-                        if (allowedItem == ItemType.None)
-                            continue;
-
-                        allowedItems.Add(allowedItem);
-                    }
-                    _logicHandler._allowedTypes = allowedItems;
-                }
-
-                Events.DoorInteractEvent += _logicHandler.OnDoorAccess;
-            }
+            Exiled.Events.Handlers.Player.InteractingDoor += _logicHandler.OnDoorAccess;
+#if DEBUG
+            Log.Debug($"Allowed items for processing: {(Config.Cards?.Count > 0 ? string.Join(", ", Config.Cards) : "null")}");
+#endif
         }
     }
 }
