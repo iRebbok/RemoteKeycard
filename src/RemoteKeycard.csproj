@@ -7,7 +7,7 @@
     <Copyright>Copyright iRebbok 2020 - $([System.DateTime]::Now.ToString("yyyy"))</Copyright>
     <TargetFramework>net472</TargetFramework>
     <PlatformTarget>x64</PlatformTarget>
-    <Version>1.4.3-EXILED2.0.0+beta1</Version>
+    <Version>1.4.3-EXILED2.0.0-beta1</Version>
     
     <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
   </PropertyGroup>
