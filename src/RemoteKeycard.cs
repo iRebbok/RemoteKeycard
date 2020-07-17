@@ -1,6 +1,5 @@
 using Exiled.API.Features;
 using Exiled.API.Interfaces;
-using System;
 using System.Collections.Generic;
 
 namespace RemoteKeycard
@@ -19,14 +18,10 @@ namespace RemoteKeycard
 
         private readonly LogicHandler _logicHandler = new LogicHandler();
 
-        public override string Name => nameof(RemoteKeycard);
         public override string Author => "iRebbok";
-        public override Version Version { get; }
 
         public RemoteKeycard()
         {
-            // A simple way to dynamic versioning
-            Version = typeof(RemoteKeycard).Assembly.GetName().Version;
             instance = this;
         }
 

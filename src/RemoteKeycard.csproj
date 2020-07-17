@@ -13,7 +13,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="EXILED" Version="2.0.0-beta1" PrivateAssets="All" />
+    <PackageReference Include="EXILED" Version="2.0.1" PrivateAssets="All" />
     <Reference Include="Assembly-CSharp" HintPath="..\dependencies\Assembly-CSharp.dll" Private="false" />
     <Reference Include="Mirror" HintPath="..\dependencies\Mirror.dll" Private="false" />
     <Reference Include="UnityEngine.CoreModule" HintPath="..\dependencies\UnityEngine.CoreModule.dll" Private="false" />
