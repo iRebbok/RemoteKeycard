@@ -20,7 +20,7 @@ namespace RemoteKeycard
 
         public override string Author => "iRebbok";
 
-        private RemoteKeycard()
+        public RemoteKeycard()
         {
             instance = this;
         }
