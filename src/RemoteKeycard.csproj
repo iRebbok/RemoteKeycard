@@ -8,13 +8,13 @@
     <TargetFramework>net472</TargetFramework>
     <PlatformTarget>x64</PlatformTarget>
     <Version>1.5.0-EXILED2.0.10</Version>
-    
+
     <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="EXILED" Version="2.0.10" PrivateAssets="None" />
-    
+    <PackageReference Include="EXILED" Version="2.0.10" />
+
     <Reference Include="Assembly-CSharp" HintPath="$(EXILED_References)\Assembly-CSharp.dll" Private="false" />
     <Reference Include="Mirror" HintPath="$(EXILED_References)\Mirror.dll" Private="false" />
     <Reference Include="UnityEngine.CoreModule" HintPath="$(EXILED_References)\UnityEngine.CoreModule.dll" Private="false" />
@@ -22,7 +22,7 @@
   </ItemGroup>
 
   <Target Name="PostBuild" AfterTargets="PostBuildEvent">
-    <!-- Since '$(OutputPath)\Exiled*.dll' doens't work, I just use this -->
+     <!-- Since '$(OutputPath)\Exiled*.dll' doens't work, I just use this -->
     <Delete Files="$([System.IO.Directory]::GetFiles(&quot;$(OutDir)&quot;, 'Exiled*.dll'))" />
   </Target>
 

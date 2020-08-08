@@ -1,15 +1,19 @@
 using Exiled.API.Features;
 using Exiled.API.Interfaces;
-using System.Collections.Generic;
+using System;
+
+using PlayerHandlers = Exiled.Events.Handlers.Player;
 
 namespace RemoteKeycard
 {
     public sealed class RKConfig : IConfig
     {
         public bool IsEnabled { get; set; } = true;
+        public bool HandleLockersAccess { get; set; } = true;
+        public bool HandleGeneratorsAccess { get; set; } = true;
 
         // Just make an empty space as []
-        public List<ItemType> Cards { get; set; } = new List<ItemType>();
+        public ItemType[] Cards { get; set; } = Array.Empty<ItemType>();
     }
 
     public sealed class RemoteKeycard : Plugin<RKConfig>
@@ -25,15 +29,20 @@ namespace RemoteKeycard
             instance = this;
         }
 
-        public override void OnDisabled() =>
-            Exiled.Events.Handlers.Player.InteractingDoor -= _logicHandler.OnDoorAccess;
-
         public override void OnEnabled()
         {
-            Exiled.Events.Handlers.Player.InteractingDoor += _logicHandler.OnDoorAccess;
+            PlayerHandlers.InteractingDoor += _logicHandler.OnDoorAccess;
+            PlayerHandlers.InteractingLocker += _logicHandler.OnLockerAccess;
+            PlayerHandlers.UnlockingGenerator += _logicHandler.OnGeneratorAccess;
 #if DEBUG
-            Log.Debug($"Allowed items for processing: {(Config.Cards?.Count > 0 ? string.Join(", ", Config.Cards) : "null")}");
+            Log.Debug($"Allowed items for processing: {(Config.Cards?.Length > 0 ? string.Join(", ", Config.Cards) : "(null)")}");
 #endif
+        }
+
+        public override void OnDisabled()
+        {
+            PlayerHandlers.InteractingDoor -= _logicHandler.OnDoorAccess;
+            PlayerHandlers.InteractingLocker -= _logicHandler.OnLockerAccess;
         }
     }
 }
