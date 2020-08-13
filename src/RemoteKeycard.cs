@@ -43,6 +43,7 @@ namespace RemoteKeycard
         {
             PlayerHandlers.InteractingDoor -= _logicHandler.OnDoorAccess;
             PlayerHandlers.InteractingLocker -= _logicHandler.OnLockerAccess;
+            PlayerHandlers.UnlockingGenerator += _logicHandler.OnGeneratorAccess;
         }
     }
 }

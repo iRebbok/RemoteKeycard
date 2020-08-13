@@ -49,7 +49,24 @@ namespace RemoteKeycard
             Log.Debug("Locker permissions: (null)");
 #endif
 
-            // I'm waiting for it
+            if (ev.IsAllowed)
+#if DEBUG
+            {
+                Log.Debug("Locker access allowed");
+                return;
+            }
+            else
+                Log.Debug("Further processing allowed...");
+#else
+                return;
+#endif
+
+            var playerIntentory = ev.Player.Inventory.items;
+
+            var tempList = ListPool<string>.Shared.Rent();
+            tempList.Add(ev.Chamber.accessToken);
+            ev.IsAllowed = Handle(playerIntentory, tempList);
+            ListPool<string>.Shared.Return(tempList);
         }
 
         public void OnGeneratorAccess(UnlockingGeneratorEventArgs ev)
