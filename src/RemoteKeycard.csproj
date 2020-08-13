@@ -10,6 +10,7 @@
     <Version>1.5.0-EXILED2.0.10</Version>
 
     <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
+    <CopyLocalLockFileAssemblies>false</CopyLocalLockFileAssemblies>
   </PropertyGroup>
 
   <ItemGroup>
@@ -20,10 +21,5 @@
     <Reference Include="UnityEngine.CoreModule" HintPath="$(EXILED_References)\UnityEngine.CoreModule.dll" Private="false" />
     <Reference Include="NorthwoodLib" HintPath="$(EXILED_References)\NorthwoodLib.dll" Private="false" />
   </ItemGroup>
-
-  <Target Name="PostBuild" AfterTargets="PostBuildEvent">
-     <!-- Since '$(OutputPath)\Exiled*.dll' doens't work, I just use this -->
-    <Delete Files="$([System.IO.Directory]::GetFiles(&quot;$(OutDir)&quot;, 'Exiled*.dll'))" />
-  </Target>
 
 </Project>
