@@ -1,4 +1,3 @@
-using Exiled.API.Features;
 using Exiled.Events.EventArgs;
 using NorthwoodLib.Pools;
 using System;
@@ -13,23 +12,16 @@ namespace RemoteKeycard
 
         public void OnDoorAccess(InteractingDoorEventArgs ev)
         {
-#if DEBUG
-            Log.Debug($"Player {ev.Player.Nickname} ({ev.Player.UserId}) is trying to access the door");
-#pragma warning disable CS0618 // Type or member is obsolete
-            Log.Debug($"Door permission: {(string.IsNullOrEmpty(ev.Door.permissionLevel) ? "None" : ev.Door.permissionLevel)}");
-#pragma warning restore CS0618 // Type or member is obsolete
-#endif
-            if (ev.IsAllowed || ev.Door.destroyed || ev.Door.locked)
-#if DEBUG
+            RemoteKeycard.instance.Debug($"Player {ev.Player.Nickname} ({ev.Player.UserId}) is trying to access the door");
+            RemoteKeycard.instance.Debug($"Door permission: {ev.Door.PermissionLevels}");
+
+            if (ev.IsAllowed || ev.Door.Networkdestroyed || ev.Door.Networklocked)
             {
-                Log.Debug($"Door is locked or destroyed or the player {ev.Player.Nickname} ({ev.Player.UserId}) has access to open it");
+                RemoteKeycard.instance.Debug("Door is locked, destroyed, or the player has access to open it");
                 return;
             }
-            else
-                Log.Debug("Further processing allowed...");
-#else
-                return;
-#endif
+
+            RemoteKeycard.instance.Debug("Further processing allowed...");
 
             var playerIntentory = ev.Player.Inventory.items;
 
@@ -44,22 +36,16 @@ namespace RemoteKeycard
             if (!RKConfig.HandleLockersAccess)
                 return;
 
-#if DEBUG
-            Log.Debug($"Player {ev.Player.Nickname} ({ev.Player.UserId}) is trying to access the locker");
-            Log.Debug("Locker permissions: (null)");
-#endif
+            RemoteKeycard.instance.Debug($"Player {ev.Player.Nickname} ({ev.Player.UserId}) is trying to access the locker");
+            RemoteKeycard.instance.Debug("Locker permissions: (null)");
 
             if (ev.IsAllowed)
-#if DEBUG
             {
-                Log.Debug("Locker access allowed");
+                RemoteKeycard.instance.Debug("Locker access allowed");
                 return;
             }
-            else
-                Log.Debug("Further processing allowed...");
-#else
-                return;
-#endif
+
+            RemoteKeycard.instance.Debug("Further processing allowed...");
 
             var playerIntentory = ev.Player.Inventory.items;
 
@@ -76,22 +62,16 @@ namespace RemoteKeycard
 
             const string GENERATOR_ACCESS = "ARMORY_LVL_2";
 
-#if DEBUG
-            Log.Debug($"Player {ev.Player.Nickname} ({ev.Player.UserId}) is trying to access the generator");
-            Log.Debug($"Generator permissions: {GENERATOR_ACCESS}");
-#endif
+            RemoteKeycard.instance.Debug($"Player {ev.Player.Nickname} ({ev.Player.UserId}) is trying to access the generator");
+            RemoteKeycard.instance.Debug($"Generator permissions: {GENERATOR_ACCESS}");
 
             if (ev.IsAllowed)
-#if DEBUG
             {
-                Log.Debug("Unlocking allowed");
+                RemoteKeycard.instance.Debug("Unlocking allowed");
                 return;
             }
-            else
-                Log.Debug("Further processing allowed...");
-#else
-                return;
-#endif
+
+            RemoteKeycard.instance.Debug("Further processing allowed...");
 
             var playerIntentory = ev.Player.Inventory.items;
 
@@ -105,19 +85,15 @@ namespace RemoteKeycard
         {
             foreach (var item in inv)
             {
-#if DEBUG
-                Log.Debug($"Processing an item in the player’s inventory: {item.id} ({(int)item.id})");
-#endif
+                RemoteKeycard.instance.Debug($"Processing an item in the player’s inventory: {item.id} ({(int)item.id})");
 
                 if (RKConfig.Cards?.Length > 0 && !RKConfig.Cards.Contains(item.id))
                     continue;
 
                 var gameItem = Array.Find(GetItems(), i => i.id == item.id);
 
-#if DEBUG
-                Log.Debug($"Game item is null: {gameItem == null}");
-                Log.Debug($"Game item processing: C {gameItem.itemCategory} ({(int)gameItem.itemCategory}) | T {item.id} ({(int)item.id}) | P {string.Join(", ", gameItem.permissions)}");
-#endif
+                RemoteKeycard.instance.Debug($"Game item is null: {gameItem == null}");
+                RemoteKeycard.instance.Debug($"Game item processing: C {gameItem.itemCategory} ({(int)gameItem.itemCategory}) | T {item.id} ({(int)item.id}) | P {string.Join(", ", gameItem.permissions)}");
 
                 // Relevant for items whose type was not found
                 if (gameItem == null)
@@ -127,13 +103,13 @@ namespace RemoteKeycard
                     continue;
 
                 foreach (var itemPerm in gameItem.permissions)
+                {
                     if (perms.Contains(itemPerm, StringComparison.Ordinal))
                     {
-#if DEBUG
-                        Log.Debug($"Item has successfully passed permission validation: {gameItem.id} ({(int)gameItem.id})");
-#endif
+                        RemoteKeycard.instance.Debug($"Item has successfully passed permission validation: {gameItem.id} ({(int)gameItem.id})");
                         return true;
                     }
+                }
             }
 
             return false;

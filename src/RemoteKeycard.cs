@@ -45,5 +45,16 @@ namespace RemoteKeycard
             PlayerHandlers.InteractingLocker -= _logicHandler.OnLockerAccess;
             PlayerHandlers.UnlockingGenerator += _logicHandler.OnGeneratorAccess;
         }
+
+        public void Debug(string message)
+        {
+#if DEBUG
+            Log.Debug(message, true);
+#endif
+        }
+
+        // I don't love reflection
+        public override void OnRegisteringCommands() { }
+        public override void OnUnregisteringCommands() { }
     }
 }
