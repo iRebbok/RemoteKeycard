@@ -12,6 +12,9 @@ namespace RemoteKeycard
 
         public void OnDoorAccess(InteractingDoorEventArgs ev)
         {
+            if (!ev.Player.IsHuman)
+                return;
+
             RemoteKeycard.instance.Debug($"Player {ev.Player.Nickname} ({ev.Player.UserId}) is trying to access the door");
             RemoteKeycard.instance.Debug($"Door permission: {ev.Door.PermissionLevels}");
 
@@ -33,7 +36,7 @@ namespace RemoteKeycard
 
         public void OnLockerAccess(InteractingLockerEventArgs ev)
         {
-            if (!RKConfig.HandleLockersAccess)
+            if (!ev.Player.IsHuman || !RKConfig.HandleLockersAccess)
                 return;
 
             RemoteKeycard.instance.Debug($"Player {ev.Player.Nickname} ({ev.Player.UserId}) is trying to access the locker");
@@ -57,7 +60,7 @@ namespace RemoteKeycard
 
         public void OnGeneratorAccess(UnlockingGeneratorEventArgs ev)
         {
-            if (!RKConfig.HandleGeneratorsAccess)
+            if (!ev.Player.IsHuman || !RKConfig.HandleGeneratorsAccess)
                 return;
 
             const string GENERATOR_ACCESS = "ARMORY_LVL_2";
