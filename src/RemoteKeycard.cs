@@ -1,6 +1,7 @@
 using Exiled.API.Features;
 using Exiled.API.Interfaces;
 using System;
+using System.Diagnostics;
 
 using PlayerHandlers = Exiled.Events.Handlers.Player;
 
@@ -46,12 +47,8 @@ namespace RemoteKeycard
             PlayerHandlers.UnlockingGenerator += _logicHandler.OnGeneratorAccess;
         }
 
-        public void Debug(string message)
-        {
-#if DEBUG
-            Log.Debug(message, true);
-#endif
-        }
+        [Conditional("DEBUG")]
+        public void Debug(string message) => Log.Debug(message, true);
 
         // I don't love reflection
         public override void OnRegisteringCommands() { }
