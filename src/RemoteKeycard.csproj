@@ -4,7 +4,7 @@
     <AssemblyName>RemoteKeycard</AssemblyName>
     <Authors>iRebbok</Authors>
     <AssemblyTitle>An SMod ＆ EXILED plugin for SCP: Secret Laboratory keeps door functioning with card in inventory</AssemblyTitle>
-    <Copyright>Copyright © iRebbok 2020 - $([System.DateTime]::Now.ToString("yyyy"))</Copyright>
+    <Copyright>Copyright © $(Authors) 2020 - $([System.DateTime]::Now.ToString("yyyy"))</Copyright>
     <TargetFramework>net472</TargetFramework>
     <PlatformTarget>x64</PlatformTarget>
     <Version>1.5.0-EXILED2.0.10</Version>
@@ -15,8 +15,9 @@
 
   <ItemGroup>
     <PackageReference Include="EXILED" Version="2.*" />
+    <PackageReference Include="Lib.Harmony" Version="2.0.4" />
 
-    <Reference Include="Assembly-CSharp" HintPath="$(EXILED_References)\Assembly-CSharp.dll" Private="false" />
+    <Reference Include="Assembly-CSharp" HintPath="$(EXILED_References)\Assembly-CSharp-Publicized.dll" Private="false" />
     <Reference Include="Mirror" HintPath="$(EXILED_References)\Mirror.dll" Private="false" />
     <Reference Include="UnityEngine.CoreModule" HintPath="$(EXILED_References)\UnityEngine.CoreModule.dll" Private="false" />
     <Reference Include="NorthwoodLib" HintPath="$(EXILED_References)\NorthwoodLib.dll" Private="false" />

@@ -24,7 +24,7 @@ namespace RemoteKeycard
                 return;
             }
 
-            RemoteKeycard.instance.Debug("Further processing allowed...");
+            RemoteKeycard.instance.Debug("Further processing is allowed...");
 
             var playerIntentory = ev.Player.Inventory.items;
 
@@ -40,15 +40,15 @@ namespace RemoteKeycard
                 return;
 
             RemoteKeycard.instance.Debug($"Player {ev.Player.Nickname} ({ev.Player.UserId}) is trying to access the locker");
-            RemoteKeycard.instance.Debug("Locker permissions: (null)");
+            RemoteKeycard.instance.Debug($"Locker permissions: {ev.Chamber.accessToken}");
 
             if (ev.IsAllowed)
             {
-                RemoteKeycard.instance.Debug("Locker access allowed");
+                RemoteKeycard.instance.Debug("Locker access is allowed");
                 return;
             }
 
-            RemoteKeycard.instance.Debug("Further processing allowed...");
+            RemoteKeycard.instance.Debug("Further processing is allowed...");
 
             var playerIntentory = ev.Player.Inventory.items;
 
@@ -70,17 +70,42 @@ namespace RemoteKeycard
 
             if (ev.IsAllowed)
             {
-                RemoteKeycard.instance.Debug("Unlocking allowed");
+                RemoteKeycard.instance.Debug("Unlocking is allowed");
                 return;
             }
 
-            RemoteKeycard.instance.Debug("Further processing allowed...");
+            RemoteKeycard.instance.Debug("Further processing is allowed...");
 
             var playerIntentory = ev.Player.Inventory.items;
 
             var tempList = ListPool<string>.Shared.Rent();
             tempList.Add(GENERATOR_ACCESS);
             ev.IsAllowed = Handle(playerIntentory, tempList);
+            ListPool<string>.Shared.Return(tempList);
+        }
+
+        public void OnOutsidePanelAccess(ActivatingWarheadPanelEventArgs ev)
+        {
+            if (!ev.Player.IsHuman || !RKConfig.HandleOutsidePanelAccess)
+                return;
+
+            const string PANEL_PERMISSION = "CONT_LVL_3";
+
+            RemoteKeycard.instance.Debug($"Player {ev.Player.Nickname} ({ev.Player.UserId}) is trying to access the outside panel");
+            RemoteKeycard.instance.Debug($"Outside panel permissions: {PANEL_PERMISSION}");
+
+            if (ev.IsAllowed)
+            {
+                RemoteKeycard.instance.Debug("Outside panel access is allowed");
+                return;
+            }
+
+            RemoteKeycard.instance.Debug("Further processing is allowed...");
+
+            var pInv = ev.Player.Inventory.items;
+            var tempList = ListPool<string>.Shared.Rent();
+            tempList.Add(PANEL_PERMISSION);
+            ev.IsAllowed = Handle(pInv, tempList);
             ListPool<string>.Shared.Return(tempList);
         }
 
