@@ -1,4 +1,6 @@
-$ROOT_PATH = (Resolve-Path -Path ($PSScriptRoot + '\..\')).Path
+#! pwsh
+
+$ROOT_PATH = $PSScriptRoot + '\'
 $BIN_PATH = ($ROOT_PATH + 'bin\')
 $PROJECT_NAME = 'RemoteKeycard'
 $CONFIGS = ('RELEASE', 'DEBUG')
@@ -6,7 +8,7 @@ $CONFIGS = ('RELEASE', 'DEBUG')
 dotnet restore $ROOT_PATH
 
 foreach ($CONFIG in $CONFIGS) {
-    $RELATIVE_OUTPUT_PATH = ("$PROJECT_NAME" + '-' + $CONFIG)
+    $RELATIVE_OUTPUT_PATH = ($PROJECT_NAME + '-' + $CONFIG)
     $OUTPUT_PATH = ($ROOT_PATH + $RELATIVE_OUTPUT_PATH)
     dotnet build $ROOT_PATH -c $CONFIG -o $OUTPUT_PATH
 
