@@ -43,6 +43,7 @@ namespace RemoteKeycard
             PlayerHandlers.InteractingDoor += _logicHandler.OnDoorAccess;
             PlayerHandlers.InteractingLocker += _logicHandler.OnLockerAccess;
             PlayerHandlers.UnlockingGenerator += _logicHandler.OnGeneratorAccess;
+            PlayerHandlers.ActivatingWarheadPanel += _logicHandler.OnOutsidePanelAccess;
 #if DEBUG
             Log.Debug($"Allowed items for processing: {(Config.Cards?.Length > 0 ? string.Join(", ", Config.Cards) : "(null)")}");
 
@@ -60,6 +61,7 @@ namespace RemoteKeycard
             PlayerHandlers.InteractingDoor -= _logicHandler.OnDoorAccess;
             PlayerHandlers.InteractingLocker -= _logicHandler.OnLockerAccess;
             PlayerHandlers.UnlockingGenerator -= _logicHandler.OnGeneratorAccess;
+            PlayerHandlers.ActivatingWarheadPanel -= _logicHandler.OnOutsidePanelAccess;
             _harmony.Unpatch(_prefixToPatch, _transpiler.method);
         }
 
