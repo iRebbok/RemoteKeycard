@@ -1,7 +1,6 @@
 using Exiled.Events.EventArgs;
-using NorthwoodLib.Pools;
+using Interactables.Interobjects.DoorUtils;
 using System;
-using System.Collections.Generic;
 
 namespace RemoteKeycard
 {
@@ -15,23 +14,24 @@ namespace RemoteKeycard
             if (!ev.Player.IsHuman)
                 return;
 
-            RemoteKeycard.instance.Debug($"Player {ev.Player.Nickname} ({ev.Player.UserId}) is trying to access the door");
-            RemoteKeycard.instance.Debug($"Door permission: {ev.Door.PermissionLevels}");
+            RemoteKeycard.Debug($"Player {ev.Player.Nickname} ({ev.Player.UserId}) is trying to access the door");
+            RemoteKeycard.Debug($"Door permission: {ev.Door.RequiredPermissions.RequiredPermissions}");
 
-            if (ev.IsAllowed || ev.Door.Networkdestroyed || ev.Door.Networklocked)
+            DoorLockMode lockMode = DoorLockUtils.GetMode((DoorLockReason)ev.Door.ActiveLocks);
+            if (ev.IsAllowed
+                || ((ev.Door is IDamageableDoor damageableDoor) && damageableDoor.IsDestroyed)
+                || (ev.Door.NetworkTargetState && !lockMode.HasFlagFast(DoorLockMode.CanClose))
+                || (!ev.Door.NetworkTargetState && !lockMode.HasFlagFast(DoorLockMode.CanOpen))
+                || lockMode.HasFlagFast(DoorLockMode.FullLock))
             {
-                RemoteKeycard.instance.Debug("Door is locked, destroyed, or the player has access to open it");
+                RemoteKeycard.Debug("Door is locked, destroyed, or the player has access to open it");
                 return;
             }
 
-            RemoteKeycard.instance.Debug("Further processing is allowed...");
+            RemoteKeycard.Debug("Further processing is allowed...");
 
             var playerIntentory = ev.Player.Inventory.items;
-
-            var tempList = ListPool<string>.Shared.Rent();
-            tempList.AddRange(GetDoorPermissions(ev.Door));
-            ev.IsAllowed = Handle(playerIntentory, tempList);
-            ListPool<string>.Shared.Return(tempList);
+            ev.IsAllowed = Handle(playerIntentory, ev.Door.RequiredPermissions.RequiredPermissions);
         }
 
         public void OnLockerAccess(InteractingLockerEventArgs ev)
@@ -39,23 +39,23 @@ namespace RemoteKeycard
             if (!ev.Player.IsHuman || !RKConfig.HandleLockersAccess)
                 return;
 
-            RemoteKeycard.instance.Debug($"Player {ev.Player.Nickname} ({ev.Player.UserId}) is trying to access the locker");
-            RemoteKeycard.instance.Debug($"Locker permissions: {ev.Chamber.accessToken}");
+            RemoteKeycard.Debug($"Player {ev.Player.Nickname} ({ev.Player.UserId}) is trying to access the locker");
+            RemoteKeycard.Debug($"Locker permissions: {ev.Chamber.accessToken}");
 
             if (ev.IsAllowed)
             {
-                RemoteKeycard.instance.Debug("Locker access is allowed");
+                RemoteKeycard.Debug("Locker access is allowed");
                 return;
             }
 
-            RemoteKeycard.instance.Debug("Further processing is allowed...");
+            RemoteKeycard.Debug("Further processing is allowed...");
+
+            KeycardPermissions permissions = KeycardPermissions.None;
+            if (!string.IsNullOrEmpty(ev.Chamber.accessToken))
+                DoorPermissionUtils.BackwardsCompatibilityPermissions.TryGetValue(ev.Chamber.accessToken, out permissions);
 
             var playerIntentory = ev.Player.Inventory.items;
-
-            var tempList = ListPool<string>.Shared.Rent();
-            tempList.Add(ev.Chamber.accessToken);
-            ev.IsAllowed = Handle(playerIntentory, tempList);
-            ListPool<string>.Shared.Return(tempList);
+            ev.IsAllowed = Handle(playerIntentory, permissions);
         }
 
         public void OnGeneratorAccess(UnlockingGeneratorEventArgs ev)
@@ -63,65 +63,61 @@ namespace RemoteKeycard
             if (!ev.Player.IsHuman || !RKConfig.HandleGeneratorsAccess)
                 return;
 
-            const string GENERATOR_ACCESS = "ARMORY_LVL_2";
+            const KeycardPermissions GENERATOR_ACCESS = KeycardPermissions.ArmoryLevelTwo;
 
-            RemoteKeycard.instance.Debug($"Player {ev.Player.Nickname} ({ev.Player.UserId}) is trying to access the generator");
-            RemoteKeycard.instance.Debug($"Generator permissions: {GENERATOR_ACCESS}");
+            RemoteKeycard.Debug($"Player {ev.Player.Nickname} ({ev.Player.UserId}) is trying to access the generator");
+            RemoteKeycard.Debug($"Generator permissions: {GENERATOR_ACCESS}");
 
             if (ev.IsAllowed)
             {
-                RemoteKeycard.instance.Debug("Unlocking is allowed");
+                RemoteKeycard.Debug("Unlocking is allowed");
                 return;
             }
 
-            RemoteKeycard.instance.Debug("Further processing is allowed...");
+            RemoteKeycard.Debug("Further processing is allowed...");
 
             var playerIntentory = ev.Player.Inventory.items;
-
-            var tempList = ListPool<string>.Shared.Rent();
-            tempList.Add(GENERATOR_ACCESS);
-            ev.IsAllowed = Handle(playerIntentory, tempList);
-            ListPool<string>.Shared.Return(tempList);
+            ev.IsAllowed = Handle(playerIntentory, GENERATOR_ACCESS);
         }
 
-        public void OnOutsidePanelAccess(ActivatingWarheadPanelEventArgs ev)
+        public void OnOutsitePanelAccess(ActivatingWarheadPanelEventArgs ev)
         {
             if (!ev.Player.IsHuman || !RKConfig.HandleOutsidePanelAccess)
                 return;
 
-            const string PANEL_PERMISSION = "CONT_LVL_3";
+            const KeycardPermissions PANEL_PERMISSION = KeycardPermissions.ContainmentLevelThree;
 
-            RemoteKeycard.instance.Debug($"Player {ev.Player.Nickname} ({ev.Player.UserId}) is trying to access the outside panel");
-            RemoteKeycard.instance.Debug($"Outside panel permissions: {PANEL_PERMISSION}");
+            RemoteKeycard.Debug($"Player {ev.Player.Nickname} ({ev.Player.UserId}) is trying to access the outside panel");
+            RemoteKeycard.Debug($"Outside panel permissions: {PANEL_PERMISSION}");
 
             if (ev.IsAllowed)
             {
-                RemoteKeycard.instance.Debug("Outside panel access is allowed");
+                RemoteKeycard.Debug("Outside panel access is allowed");
                 return;
             }
 
-            RemoteKeycard.instance.Debug("Further processing is allowed...");
+            RemoteKeycard.Debug("Further processing is allowed...");
 
             var pInv = ev.Player.Inventory.items;
-            var tempList = ListPool<string>.Shared.Rent();
-            tempList.Add(PANEL_PERMISSION);
-            ev.IsAllowed = Handle(pInv, tempList);
-            ListPool<string>.Shared.Return(tempList);
+            ev.IsAllowed = Handle(pInv, PANEL_PERMISSION);
         }
 
-        private bool Handle(Inventory.SyncListItemInfo inv, List<string> perms)
+        private bool Handle(Inventory.SyncListItemInfo inv, KeycardPermissions perms)
         {
+            if (perms == KeycardPermissions.None)
+                return true;
+
             foreach (var item in inv)
             {
-                RemoteKeycard.instance.Debug($"Processing an item in the player’s inventory: {item.id} ({(int)item.id})");
+                RemoteKeycard.Debug($"Processing an item in the player’s inventory: {item.id} ({(int)item.id})");
 
                 if (RKConfig.Cards?.Length > 0 && !RKConfig.Cards.Contains(item.id))
                     continue;
 
                 var gameItem = Array.Find(GetItems(), i => i.id == item.id);
 
-                RemoteKeycard.instance.Debug($"Game item is null: {gameItem == null}");
-                RemoteKeycard.instance.Debug($"Game item processing: C {gameItem.itemCategory} ({(int)gameItem.itemCategory}) | T {item.id} ({(int)item.id}) | P {string.Join(", ", gameItem.permissions)}");
+                RemoteKeycard.Debug($"Game item is null: {gameItem == null}");
+                RemoteKeycard.Debug($"Game item processing: C {gameItem.itemCategory} ({(int)gameItem.itemCategory}) | T {item.id} ({(int)item.id}) | P {string.Join(", ", gameItem.permissions)}");
 
                 // Relevant for items whose type was not found
                 if (gameItem == null)
@@ -130,13 +126,11 @@ namespace RemoteKeycard
                 if (gameItem.permissions == null || gameItem.permissions.Length == 0)
                     continue;
 
-                foreach (var itemPerm in gameItem.permissions)
+                var itemPerms = DoorPermissionUtils.TranslateObsoletePermissions(gameItem.permissions);
+                if (itemPerms.HasFlagFast(perms))
                 {
-                    if (perms.Contains(itemPerm, StringComparison.Ordinal))
-                    {
-                        RemoteKeycard.instance.Debug($"Item has successfully passed permission validation: {gameItem.id} ({(int)gameItem.id})");
-                        return true;
-                    }
+                    RemoteKeycard.Debug($"Item has successfully passed permission validation: {gameItem.id} ({(int)gameItem.id})");
+                    return true;
                 }
             }
 
@@ -145,18 +139,7 @@ namespace RemoteKeycard
 
         public Item[] GetItems()
         {
-#pragma warning disable IDE0074 // Use compound assignment
             return _cache ?? (_cache = UnityEngine.Object.FindObjectOfType<Inventory>().availableItems);
-#pragma warning restore IDE0074 // Use compound assignment
-        }
-
-        private IEnumerable<string> GetDoorPermissions(Door door)
-        {
-            foreach (var pair in Door.backwardsCompatPermissions)
-            {
-                if ((door.PermissionLevels & pair.Value) != 0)
-                    yield return pair.Key;
-            }
         }
     }
 }

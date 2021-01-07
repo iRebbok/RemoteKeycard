@@ -1,15 +1,15 @@
 using Exiled.API.Features;
 using Exiled.API.Interfaces;
-using System;
-using System.Diagnostics;
 using HarmonyLib;
+using Mirror;
+using NorthwoodLib.Pools;
+using System;
+using System.Collections.Generic;
+using System.Diagnostics;
+using System.Reflection;
+using System.Reflection.Emit;
 
 using PlayerHandlers = Exiled.Events.Handlers.Player;
-using System.Reflection;
-using System.Collections.Generic;
-using NorthwoodLib.Pools;
-using System.Reflection.Emit;
-using Mirror;
 
 namespace RemoteKeycard
 {
@@ -29,7 +29,7 @@ namespace RemoteKeycard
         internal static RemoteKeycard instance;
 
         private readonly LogicHandler _logicHandler = new LogicHandler();
-        private readonly Harmony _harmony = new Harmony("net.rebb");
+        private readonly Harmony _harmony = new Harmony("dev.rebb");
         private readonly MethodInfo _prefixToPatch = AccessTools.Method("Exiled.Events.Patches.Events.Player.ActivatingWarheadPanel:Prefix");
         private readonly HarmonyMethod _transpiler = new HarmonyMethod(typeof(RemoteKeycard), nameof(ExiledPrefixPatch));
 
@@ -43,7 +43,7 @@ namespace RemoteKeycard
             PlayerHandlers.InteractingDoor += _logicHandler.OnDoorAccess;
             PlayerHandlers.InteractingLocker += _logicHandler.OnLockerAccess;
             PlayerHandlers.UnlockingGenerator += _logicHandler.OnGeneratorAccess;
-            PlayerHandlers.ActivatingWarheadPanel += _logicHandler.OnOutsidePanelAccess;
+            PlayerHandlers.ActivatingWarheadPanel += _logicHandler.OnOutsitePanelAccess;
 #if DEBUG
             Log.Debug($"Allowed items for processing: {(Config.Cards?.Length > 0 ? string.Join(", ", Config.Cards) : "(null)")}");
 
@@ -61,7 +61,7 @@ namespace RemoteKeycard
             PlayerHandlers.InteractingDoor -= _logicHandler.OnDoorAccess;
             PlayerHandlers.InteractingLocker -= _logicHandler.OnLockerAccess;
             PlayerHandlers.UnlockingGenerator -= _logicHandler.OnGeneratorAccess;
-            PlayerHandlers.ActivatingWarheadPanel -= _logicHandler.OnOutsidePanelAccess;
+            PlayerHandlers.ActivatingWarheadPanel -= _logicHandler.OnOutsitePanelAccess;
             _harmony.Unpatch(_prefixToPatch, _transpiler.method);
         }
 
@@ -107,7 +107,7 @@ namespace RemoteKeycard
         }
 
         [Conditional("DEBUG")]
-        public void Debug(string message) => Log.Debug(message, true);
+        public static void Debug(string message) => Log.Debug(message, true);
 
         // I don't love reflection
         public override void OnRegisteringCommands() { }
