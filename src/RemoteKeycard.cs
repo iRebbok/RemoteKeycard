@@ -1,3 +1,4 @@
+using Exiled.API.Enums;
 using Exiled.API.Features;
 using Exiled.API.Interfaces;
 using HarmonyLib;
@@ -32,6 +33,8 @@ namespace RemoteKeycard
         private readonly Harmony _harmony = new Harmony("dev.rebb");
         private readonly MethodInfo _prefixToPatch = AccessTools.Method("Exiled.Events.Patches.Events.Player.ActivatingWarheadPanel:Prefix");
         private readonly HarmonyMethod _transpiler = new HarmonyMethod(typeof(RemoteKeycard), nameof(ExiledPrefixPatch));
+
+        public override PluginPriority Priority => PluginPriority.Higher;
 
         public RemoteKeycard()
         {
