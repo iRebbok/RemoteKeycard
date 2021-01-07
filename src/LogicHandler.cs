@@ -42,7 +42,7 @@ namespace RemoteKeycard
                 return;
 
             RemoteKeycard.Debug($"Player {ev.Player.Nickname} ({ev.Player.UserId}) is trying to access the locker");
-            RemoteKeycard.Debug($"Locker permissions: {ev.Chamber.accessToken}");
+            RemoteKeycard.Debug($"Locker permissions: {(!string.IsNullOrEmpty(ev.Chamber.accessToken) ? "(null)" : ev.Chamber.accessToken)}");
 
             if (ev.IsAllowed)
             {
@@ -121,8 +121,8 @@ namespace RemoteKeycard
                 if (gameItem == null)
                     continue;
 
-                var itemPerms = DoorPermissionUtils.TranslateObsoletePermissions(gameItem.permissions).ToTruthyPermissions();
-                RemoteKeycard.Debug($"Game item processing: C {gameItem.itemCategory} ({(int)gameItem.itemCategory}) | T {item.id} ({(int)item.id}) | P {itemPerms}");
+                var itemPerms = Keycard.ToTruthyPermissions(gameItem.permissions);
+                RemoteKeycard.Debug($"Game item processing: C {gameItem.itemCategory} ({(int)gameItem.itemCategory}) | T {item.id} ({(int)item.id}) | P {itemPerms} | P:string[] {string.Join(", ", gameItem.permissions)}");
 
                 if (itemPerms.HasFlagFast(perms, requireAll))
                 {

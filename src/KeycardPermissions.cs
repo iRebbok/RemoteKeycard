@@ -23,7 +23,7 @@ namespace RemoteKeycard
             ArmoryLevelThree = 0x200,
             ScpOverride = 0x400,
 
-            Pedestals = 0x800
+            Pedestal = 0x800
         }
 
         public static readonly ReadOnlyDictionary<string, Permissions> BackwardsCompatibility = new ReadOnlyDictionary<string, Permissions>(new Dictionary<string, Permissions>
@@ -40,7 +40,7 @@ namespace RemoteKeycard
             ["CHCKPOINT_ACC"] = Permissions.Checkpoints,
             ["EXIT_ACC"] = Permissions.ExitGates,
 
-            ["PEDESTAL_ACC"] = Permissions.Pedestals,
+            ["PEDESTAL_ACC"] = Permissions.Pedestal,
         });
 
         public static Permissions ToTruthyPermissions(this KeycardPermissions keycardPermissions) => (Permissions)keycardPermissions;
