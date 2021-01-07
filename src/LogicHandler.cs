@@ -18,11 +18,13 @@ namespace RemoteKeycard
             RemoteKeycard.Debug($"Door permission: {ev.Door.RequiredPermissions.RequiredPermissions}");
 
             DoorLockMode lockMode = DoorLockUtils.GetMode((DoorLockReason)ev.Door.ActiveLocks);
+            RemoteKeycard.Debug($"Door lock mode: {lockMode}");
+
             if (ev.IsAllowed
                 || ((ev.Door is IDamageableDoor damageableDoor) && damageableDoor.IsDestroyed)
                 || (ev.Door.NetworkTargetState && !lockMode.HasFlagFast(DoorLockMode.CanClose))
                 || (!ev.Door.NetworkTargetState && !lockMode.HasFlagFast(DoorLockMode.CanOpen))
-                || lockMode.HasFlagFast(DoorLockMode.FullLock))
+                || lockMode == DoorLockMode.FullLock)
             {
                 RemoteKeycard.Debug("Door is locked, destroyed, or the player has access to open it");
                 return;
@@ -31,7 +33,7 @@ namespace RemoteKeycard
             RemoteKeycard.Debug("Further processing is allowed...");
 
             var playerIntentory = ev.Player.Inventory.items;
-            ev.IsAllowed = Handle(playerIntentory, ev.Door.RequiredPermissions.RequiredPermissions);
+            ev.IsAllowed = Handle(playerIntentory, ev.Door.RequiredPermissions.RequiredPermissions, ev.Door.RequiredPermissions.RequireAll);
         }
 
         public void OnLockerAccess(InteractingLockerEventArgs ev)
@@ -102,7 +104,7 @@ namespace RemoteKeycard
             ev.IsAllowed = Handle(pInv, PANEL_PERMISSION);
         }
 
-        private bool Handle(Inventory.SyncListItemInfo inv, KeycardPermissions perms)
+        private bool Handle(Inventory.SyncListItemInfo inv, KeycardPermissions perms, bool requireAll = true)
         {
             if (perms == KeycardPermissions.None)
                 return true;
@@ -117,17 +119,14 @@ namespace RemoteKeycard
                 var gameItem = Array.Find(GetItems(), i => i.id == item.id);
 
                 RemoteKeycard.Debug($"Game item is null: {gameItem == null}");
-                RemoteKeycard.Debug($"Game item processing: C {gameItem.itemCategory} ({(int)gameItem.itemCategory}) | T {item.id} ({(int)item.id}) | P {string.Join(", ", gameItem.permissions)}");
-
                 // Relevant for items whose type was not found
                 if (gameItem == null)
                     continue;
 
-                if (gameItem.permissions == null || gameItem.permissions.Length == 0)
-                    continue;
-
                 var itemPerms = DoorPermissionUtils.TranslateObsoletePermissions(gameItem.permissions);
-                if (itemPerms.HasFlagFast(perms))
+                RemoteKeycard.Debug($"Game item processing: C {gameItem.itemCategory} ({(int)gameItem.itemCategory}) | T {item.id} ({(int)item.id}) | P {itemPerms}");
+
+                if (requireAll ? itemPerms.HasFlagFast(perms) : (itemPerms & perms) != 0)
                 {
                     RemoteKeycard.Debug($"Item has successfully passed permission validation: {gameItem.id} ({(int)gameItem.id})");
                     return true;
