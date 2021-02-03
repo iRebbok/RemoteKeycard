@@ -20,6 +20,7 @@ namespace RemoteKeycard
         public bool HandleLockersAccess { get; set; } = true;
         public bool HandleGeneratorsAccess { get; set; } = true;
         public bool HandleOutsidePanelAccess { get; set; } = true;
+        public bool TreatTutorialsAsHumans { get; set; }
 
         // Just make an empty space as []
         public ItemType[] Cards { get; set; } = Array.Empty<ItemType>();

@@ -1,3 +1,4 @@
+using Exiled.API.Features;
 using Exiled.Events.EventArgs;
 using Interactables.Interobjects.DoorUtils;
 using System;
@@ -11,7 +12,7 @@ namespace RemoteKeycard
 
         public void OnDoorAccess(InteractingDoorEventArgs ev)
         {
-            if (!ev.Player.IsHuman)
+            if (!CanInteract(ev.Player))
                 return;
 
             RemoteKeycard.Debug($"Player {ev.Player.Nickname} ({ev.Player.UserId}) is trying to access the door");
@@ -38,7 +39,7 @@ namespace RemoteKeycard
 
         public void OnLockerAccess(InteractingLockerEventArgs ev)
         {
-            if (!ev.Player.IsHuman || !RKConfig.HandleLockersAccess)
+            if (!CanInteract(ev.Player) || !RKConfig.HandleLockersAccess)
                 return;
 
             RemoteKeycard.Debug($"Player {ev.Player.Nickname} ({ev.Player.UserId}) is trying to access the locker");
@@ -60,7 +61,7 @@ namespace RemoteKeycard
 
         public void OnGeneratorAccess(UnlockingGeneratorEventArgs ev)
         {
-            if (!ev.Player.IsHuman || !RKConfig.HandleGeneratorsAccess)
+            if (!CanInteract(ev.Player) || !RKConfig.HandleGeneratorsAccess)
                 return;
 
             const Keycard.Permissions GENERATOR_ACCESS = Keycard.Permissions.ArmoryLevelTwo;
@@ -82,7 +83,7 @@ namespace RemoteKeycard
 
         public void OnOutsitePanelAccess(ActivatingWarheadPanelEventArgs ev)
         {
-            if (!ev.Player.IsHuman || !RKConfig.HandleOutsidePanelAccess)
+            if (!CanInteract(ev.Player) || !RKConfig.HandleOutsidePanelAccess)
                 return;
 
             const Keycard.Permissions PANEL_PERMISSION = Keycard.Permissions.ContainmentLevelThree;
@@ -138,5 +139,7 @@ namespace RemoteKeycard
         {
             return _cache ?? (_cache = UnityEngine.Object.FindObjectOfType<Inventory>().availableItems);
         }
+
+        public bool CanInteract(Player p) => p.IsHuman || (p.Role == RoleType.Tutorial && RKConfig.TreatTutorialsAsHumans);
     }
 }
