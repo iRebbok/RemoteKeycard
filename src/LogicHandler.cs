@@ -83,17 +83,20 @@ namespace RemoteKeycard
 
         public void OnOutsitePanelAccess(ActivatingWarheadPanelEventArgs ev)
         {
+            if (!RemoteKeycard.instance.PatchedSuccessfully)
+                return;
+
             if (!CanInteract(ev.Player) || !RKConfig.HandleOutsidePanelAccess)
                 return;
 
             const Keycard.Permissions PANEL_PERMISSION = Keycard.Permissions.ContainmentLevelThree;
 
             RemoteKeycard.Debug($"Player {ev.Player.Nickname} ({ev.Player.UserId}) is trying to access the outside panel");
-            RemoteKeycard.Debug($"Outside panel permissions: {PANEL_PERMISSION}");
+            RemoteKeycard.Debug($"Outsite panel permissions: {PANEL_PERMISSION}");
 
             if (ev.IsAllowed)
             {
-                RemoteKeycard.Debug("Outside panel access is allowed");
+                RemoteKeycard.Debug("Outsite panel access is allowed");
                 return;
             }
 

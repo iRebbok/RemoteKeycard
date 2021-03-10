@@ -34,9 +34,10 @@ namespace RemoteKeycard
 
         private readonly LogicHandler _logicHandler = new LogicHandler();
         private readonly Harmony _harmony = new Harmony("dev.rebb");
-        private readonly MethodInfo _prefixToPatch = AccessTools.Method("Exiled.Events.Patches.Events.Player.ActivatingWarheadPanel:Prefix");
-        private readonly HarmonyMethod _transpiler = new HarmonyMethod(typeof(RemoteKeycard), nameof(ExiledPrefixPatch));
+        private readonly MethodInfo _methodToPatch = AccessTools.Method("PlayerInteract:CallCmdSwitchAWButton");
+        private readonly HarmonyMethod _transpiler = new HarmonyMethod(typeof(RemoteKeycard), nameof(ActivatingOutsitePanelPatch));
 
+        public bool PatchedSuccessfully { get; private set; }
         public override PluginPriority Priority => PluginPriority.Higher;
 
         public RemoteKeycard()
@@ -50,16 +51,10 @@ namespace RemoteKeycard
             PlayerHandlers.InteractingLocker += _logicHandler.OnLockerAccess;
             PlayerHandlers.UnlockingGenerator += _logicHandler.OnGeneratorAccess;
             PlayerHandlers.ActivatingWarheadPanel += _logicHandler.OnOutsitePanelAccess;
-#if DEBUG
-            Log.Debug($"Allowed items for processing: {(Config.Cards?.Length > 0 ? string.Join(", ", Config.Cards) : "(null)")}");
 
-            var lastDebug = Harmony.DEBUG;
-            Harmony.DEBUG = true;
-#endif
-            _harmony.Patch(_prefixToPatch, transpiler: _transpiler);
-#if DEBUG
-            Harmony.DEBUG = lastDebug;
-#endif
+            Debug($"Allowed items for processing: {(Config.Cards?.Length > 0 ? string.Join(", ", Config.Cards) : "(null)")}");
+
+            PatchSafely();
 
             base.OnEnabled();
         }
@@ -70,24 +65,75 @@ namespace RemoteKeycard
             PlayerHandlers.InteractingLocker -= _logicHandler.OnLockerAccess;
             PlayerHandlers.UnlockingGenerator -= _logicHandler.OnGeneratorAccess;
             PlayerHandlers.ActivatingWarheadPanel -= _logicHandler.OnOutsitePanelAccess;
-            _harmony.Unpatch(_prefixToPatch, _transpiler.method);
+
+            UnpatchSafely();
 
             base.OnDisabled();
         }
 
-        private static IEnumerable<CodeInstruction> ExiledPrefixPatch(IEnumerable<CodeInstruction> instructions, ILGenerator generator)
+        private void PatchSafely()
         {
+            try
+            {
+#if DEBUG
+                var lastDebug = Harmony.DEBUG;
+                Harmony.DEBUG = true;
+#endif
+                _harmony.Patch(_methodToPatch, transpiler: _transpiler);
+#if DEBUG
+                Harmony.DEBUG = lastDebug;
+#endif
+
+                PatchedSuccessfully = true;
+            }
+            catch (Exception e)
+            {
+                Log.Error("An exception was thrown during patching, it won't interfere with the overall work of the plugin but affects the activating outsite panel feature.");
+                Log.Error(e);
+            }
+        }
+
+        private void UnpatchSafely()
+        {
+            try
+            {
+                if (PatchedSuccessfully)
+                {
+                    _harmony.Unpatch(_methodToPatch, _transpiler.method);
+                }
+
+                PatchedSuccessfully = false;
+            }
+            catch (Exception e)
+            {
+                Log.Error("An exception was thrown during unpatching");
+                Log.Error(e);
+            }
+        }
+
+        private static IEnumerable<CodeInstruction> ActivatingOutsitePanelPatch(IEnumerable<CodeInstruction> instructions, ILGenerator generator)
+        {
+            // Ok, so I need to make it invoke the event even if
+            // the item is null (the one in the player's hands)
+            // ---> there's no need to invoke the event if the player
+            //      has no items in his inventory
+
             var newInstructions = ListPool<CodeInstruction>.Shared.Rent(instructions);
 
             Predicate<CodeInstruction> searchPredicate = i => i.opcode == OpCodes.Ldloc_1;
 
             var index = newInstructions.FindIndex(searchPredicate);
+
+            // Get the label of br below ldloc.1
             var label = newInstructions[index + 1].operand;
 
+            // Remove ldloc.1 & br
             newInstructions.RemoveRange(index, 2);
-
             newInstructions.InsertRange(index, new[]
             {
+                // if (this._inv.items.Count == 0)
+                //      return;
+
                 new CodeInstruction(OpCodes.Ldarg_0),
                 new CodeInstruction(OpCodes.Ldfld, AccessTools.Field(typeof(PlayerInteract), nameof(PlayerInteract._inv))),
                 new CodeInstruction(OpCodes.Ldfld, AccessTools.Field(typeof(Inventory), nameof(Inventory.items))),
@@ -98,16 +144,23 @@ namespace RemoteKeycard
             });
 
             index = newInstructions.FindIndex(index, searchPredicate);
+
+            // Get the label of newobj of the event
             label = newInstructions[newInstructions.FindIndex(index, i => i.opcode == OpCodes.Br_S || i.opcode == OpCodes.Br)].operand;
 
             var notNullLabel = generator.DefineLabel();
             newInstructions[index].WithLabels(notNullLabel);
+
+            // if (item != null)
+            //      push item.permissions.Contains("CONT_LVL_3");    <--- in the IL
+            // else
+            //      push false
             newInstructions.InsertRange(index, new[]
             {
                 new CodeInstruction(OpCodes.Ldloc_1),
                 new CodeInstruction(OpCodes.Brtrue, notNullLabel),
                 new CodeInstruction(OpCodes.Ldc_I4_0),
-                new CodeInstruction(OpCodes.Br, label)
+                new CodeInstruction(OpCodes.Br_S, label)
             });
 
             for (var z = 0; z < newInstructions.Count; z++)
