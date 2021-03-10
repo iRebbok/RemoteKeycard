@@ -30,6 +30,8 @@ namespace RemoteKeycard
     {
         internal static RemoteKeycard instance;
 
+        public override System.Version RequiredExiledVersion { get; } = new System.Version(2, 9, 0);
+
         private readonly LogicHandler _logicHandler = new LogicHandler();
         private readonly Harmony _harmony = new Harmony("dev.rebb");
         private readonly MethodInfo _prefixToPatch = AccessTools.Method("Exiled.Events.Patches.Events.Player.ActivatingWarheadPanel:Prefix");
@@ -58,6 +60,8 @@ namespace RemoteKeycard
 #if DEBUG
             Harmony.DEBUG = lastDebug;
 #endif
+
+            base.OnEnabled();
         }
 
         public override void OnDisabled()
@@ -67,6 +71,8 @@ namespace RemoteKeycard
             PlayerHandlers.UnlockingGenerator -= _logicHandler.OnGeneratorAccess;
             PlayerHandlers.ActivatingWarheadPanel -= _logicHandler.OnOutsitePanelAccess;
             _harmony.Unpatch(_prefixToPatch, _transpiler.method);
+
+            base.OnDisabled();
         }
 
         private static IEnumerable<CodeInstruction> ExiledPrefixPatch(IEnumerable<CodeInstruction> instructions, ILGenerator generator)
